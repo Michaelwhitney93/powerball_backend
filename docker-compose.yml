@@ -1,0 +1,42 @@
+volumes:
+  pgdata:
+networks:
+  powerball-network:
+services:
+  powerball-backend:
+    build: .
+    environment:
+      FLASK_APP: "main.py"
+      DATABASE_URL: "postgresql://postgres:password@powerball-db:5432/powerball"
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    networks:
+      - powerball-network
+    depends_on:
+      powerball-db:
+        condition: service_healthy
+    command: >
+      sh -c "poetry run alembic upgrade head &&
+             poetry run flask run --host=0.0.0.0"
+
+  powerball-db:
+    image: postgres:17.4
+    restart: always
+    environment:
+      PGUSER: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_DB: "powerball"
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - powerball-network
