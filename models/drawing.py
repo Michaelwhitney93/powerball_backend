@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, Date
+from sqlalchemy import Column, Integer, DateTime
+from datetime import datetime
 from db.engine import Base
 
 
@@ -11,17 +12,17 @@ class Drawing(Base):
     fourth_ball = Column(Integer)
     fifth_ball = Column(Integer)
     power_ball = Column(Integer)
-    date_drawn = Column(Date)
+    date_drawn = Column(DateTime)
 
     def __init__(
         self,
-        first_ball=None,
-        second_ball=None,
-        third_ball=None,
-        fourth_ball=None,
-        fifth_ball=None,
-        power_ball=None,
-        date_drawn=None
+        first_ball: int = None,
+        second_ball: int = None,
+        third_ball: int = None,
+        fourth_ball: int = None,
+        fifth_ball: int = None,
+        power_ball: int = None,
+        date_drawn: datetime = None
     ):
         self.first_ball=first_ball
         self.second_ball=second_ball
@@ -30,3 +31,16 @@ class Drawing(Base):
         self.fifth_ball=fifth_ball
         self.power_ball=power_ball
         self.date_drawn=date_drawn
+
+    def is_complete_instance(self):
+        if (
+            self.first_ball is None
+            or self.second_ball is None
+            or self.third_ball is None
+            or self.fourth_ball is None
+            or self.fifth_ball is None
+            or self.power_ball is None
+        ):
+            return False
+
+        return True

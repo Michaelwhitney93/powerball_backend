@@ -1,8 +1,8 @@
 """Create drawings
 
-Revision ID: afbdaa81dea1
+Revision ID: 8e2c1421fefd
 Revises: 
-Create Date: 2025-03-13 18:29:57.002628
+Create Date: 2025-03-14 16:00:27.786388
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'afbdaa81dea1'
+revision: str = '8e2c1421fefd'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -29,7 +29,7 @@ def upgrade() -> None:
     sa.Column('fourth_ball', sa.Integer(), nullable=True),
     sa.Column('fifth_ball', sa.Integer(), nullable=True),
     sa.Column('power_ball', sa.Integer(), nullable=True),
-    sa.Column('date_drawn', sa.Date(), nullable=True),
+    sa.Column('date_drawn', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###

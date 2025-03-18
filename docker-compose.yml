@@ -7,6 +7,7 @@ services:
     build: .
     environment:
       FLASK_APP: "main.py"
+      FLASK_ENV: "development"
       DATABASE_URL: "postgresql://postgres:password@powerball-db:5432/powerball"
     ports:
       - "5000:5000"
@@ -19,7 +20,7 @@ services:
         condition: service_healthy
     command: >
       sh -c "poetry run alembic upgrade head &&
-             poetry run flask run --host=0.0.0.0"
+             poetry run flask run --host=0.0.0.0 --reload"
 
   powerball-db:
     image: postgres:17.4
