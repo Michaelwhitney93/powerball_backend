@@ -6,6 +6,13 @@ NEXT_WEEKDAY_DRAWING_MAPPING = {
     2: 3,
     5: 2,
 }
+ALT_CHANGE_RANGE = {
+    "first_number": [0.60, 0.80],
+    "second_number": [0.60, 0.85],
+    "third_number": [0.60, 0.85],
+    "fourth_number": [0.70, 0.90],
+    "fifth_number": [0.65, 0.85]
+}
 NUMBER_GENERATION_RANGE = {
     "first_number": (1, 10), # %55
     "first_number_alt": (11, 19), # %25
