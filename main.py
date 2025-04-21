@@ -29,7 +29,7 @@ def generate_random_drawing():
     drawn_powerball_numbers = set()
     existing_drawing = False
     for _ in range(drawing_count):
-        first_alt = random.random() >= 0.85
+        first_alt = random.random() >= 0.81
         last_alt = random.random() >= 0.80
 
         if first_alt:
@@ -41,11 +41,11 @@ def generate_random_drawing():
             second_number = random.randint(max(first_number + 1, NUMBER_GENERATION_RANGE["second_number"][0]), NUMBER_GENERATION_RANGE["second_number"][1])
             third_number = random.randint(max(second_number + 1, NUMBER_GENERATION_RANGE["third_number"][0]), NUMBER_GENERATION_RANGE["third_number"][1])
 
-        fourth_number = random.randint(max(third_number + 1, NUMBER_GENERATION_RANGE["fourth_number"][0]), NUMBER_GENERATION_RANGE["fourth_number"][1])
-
         if last_alt:
-            fifth_number = random.randint(max(fourth_number + 1, NUMBER_GENERATION_RANGE["fifth_number_alt"][0]), NUMBER_GENERATION_RANGE["fifth_number_alt"][1])
+            fifth_number = random.randint(max(third_number + 1, NUMBER_GENERATION_RANGE["fifth_number_alt"][0]), NUMBER_GENERATION_RANGE["fifth_number_alt"][1])
+            fourth_number = random.randint(third_number + 1, fifth_number - 1)
         else:
+            fourth_number = random.randint(max(third_number + 1, NUMBER_GENERATION_RANGE["fourth_number"][0]), NUMBER_GENERATION_RANGE["fourth_number"][1])
             fifth_number = random.randint(max(fourth_number + 1, NUMBER_GENERATION_RANGE["fifth_number"][0]), NUMBER_GENERATION_RANGE["fifth_number"][1])
 
         powerball_number = random.randint(1, 26)
