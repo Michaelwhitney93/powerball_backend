@@ -7,16 +7,16 @@ NEXT_WEEKDAY_DRAWING_MAPPING = {
     5: 2,
 }
 ALT_CHANGE_RANGE = {
-    "first_number": [0.60, 0.80],
+    "first_number": [0.69, 0.90],
     "second_number": [0.60, 0.85],
     "third_number": [0.60, 0.85],
     "fourth_number": [0.70, 0.90],
-    "fifth_number": [0.65, 0.85]
+    "fifth_number": [0.675, 0.90]
 }
 NUMBER_GENERATION_RANGE = {
-    "first_number": (1, 10), # %55
+    "first_number": (1, 10), # %65
     "first_number_alt": (11, 19), # %25
-    "first_number_alt_alt": (20, 30), # %20
+    "first_number_alt_alt": (20, 30), # %10
 # >--------------------------------------------------< #
     "second_number": (11, 30), # %60
     "second_number_alt": (31, 47), # %25
@@ -30,9 +30,9 @@ NUMBER_GENERATION_RANGE = {
     "fourth_number_alt": (60, 65), # %20
     "fourth_number_alt_alt": (26, 34), # %10
 # >--------------------------------------------------< #
-    "fifth_number": (59, 69), # %60
-    "fifth_number_alt": (49, 58), # %25
-    "fifth_number_alt_alt": (32, 48) # %15
+    "fifth_number": (59, 69), # %65
+    "fifth_number_alt": (49, 58), # %20
+    "fifth_number_alt_alt": (36, 48) # %15
 }
 
 # Our current chances of winning: 1 in 196,815,528

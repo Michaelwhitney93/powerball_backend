@@ -6,6 +6,7 @@ from services.fetch_numbers_service.constants import NEXT_START_DATE, NEXT_WEEKD
 from services.fetch_numbers_service.parser import build_drawing_from_html
 from db.engine import db_session
 from db.repositories.drawings import get_by
+from models.generations import Generation
 
 
 def populate_drawings(draw_date: str = NEXT_START_DATE):
@@ -29,6 +30,20 @@ def populate_drawings(draw_date: str = NEXT_START_DATE):
     except requests.exceptions.RequestException as e:
         print(f"Request Failed: {e}")
         raise e
+    
+
+def save_generation(first, second, third, fourth, fifth, powerball):
+    generation = Generation(
+        first_ball=first,
+        second_ball=second,
+        third_ball=third,
+        fourth_ball=fourth,
+        fifth_ball=fifth,
+        power_ball=powerball,
+        date_generated=datetime.today()
+    )
+    db_session.add(generation)
+    db_session.commit()
 
 
 def check_numbers(first, second, third, fourth, fifth, powerball=None):

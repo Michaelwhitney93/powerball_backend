@@ -2,7 +2,7 @@ import random
 import requests
 from flask import Flask, request
 from db.engine import init_db, tear_down_db
-from services.fetch_numbers_service.fetch_numbers import populate_drawings, check_numbers
+from services.fetch_numbers_service.fetch_numbers import populate_drawings, check_numbers, save_generation
 from services.fetch_numbers_service.constants import NUMBER_GENERATION_RANGE, ALT_CHANGE_RANGE
 app = Flask(__name__)
 init_db()
@@ -73,8 +73,8 @@ def generate_random_drawing_v1():
 
 @app.route("/generate/random/v2")
 def generate_random_drawing_v2():
-    print("New API")
     drawing_count = int(request.args.get("drawings", "1"))
+    should_save_generation = request.args.get("save_generation", "False") == "True"
     numbers = []
     existing_drawing = False
     for _ in range(drawing_count):
@@ -90,17 +90,22 @@ def generate_random_drawing_v2():
             first_number = random.randint(NUMBER_GENERATION_RANGE["first_number"][0], NUMBER_GENERATION_RANGE["first_number_alt"][1])
 # <-------------------------------------------------------------------------------------------------------------------------------------------------->
         fifth_alt = random.random()
+        fifth_number = None
 
-        if fifth_alt <= ALT_CHANGE_RANGE["fifth_number"][0]:
-            fifth_number = random.randint(NUMBER_GENERATION_RANGE["fifth_number"][0], NUMBER_GENERATION_RANGE["fifth_number"][1])
-        elif fifth_alt > ALT_CHANGE_RANGE["fifth_number"][0] and fifth_alt <= ALT_CHANGE_RANGE["fifth_number"][1]:
-            fifth_number = random.randint(NUMBER_GENERATION_RANGE["fifth_number_alt"][0], NUMBER_GENERATION_RANGE["fifth_number_alt"][1])
-        elif fifth_alt > ALT_CHANGE_RANGE["fifth_number"][1]:
-            fifth_number = random.randint(NUMBER_GENERATION_RANGE["fifth_number_alt_alt"][0], NUMBER_GENERATION_RANGE["fifth_number_alt_alt"][1])
-            while fifth_number - first_number <= 10:
+        while fifth_number is None:
+            if fifth_alt <= ALT_CHANGE_RANGE["fifth_number"][0]:
+                fifth_number = random.randint(NUMBER_GENERATION_RANGE["fifth_number"][0], NUMBER_GENERATION_RANGE["fifth_number"][1])
+            elif fifth_alt > ALT_CHANGE_RANGE["fifth_number"][0] and fifth_alt <= ALT_CHANGE_RANGE["fifth_number"][1]:
+                fifth_number = random.randint(NUMBER_GENERATION_RANGE["fifth_number_alt"][0], NUMBER_GENERATION_RANGE["fifth_number_alt"][1])
+            elif fifth_alt > ALT_CHANGE_RANGE["fifth_number"][1]:
                 fifth_number = random.randint(NUMBER_GENERATION_RANGE["fifth_number_alt_alt"][0], NUMBER_GENERATION_RANGE["fifth_number_alt_alt"][1])
-        else:
-            fifth_number = random.randint(NUMBER_GENERATION_RANGE["fifth_number_alt"][0], NUMBER_GENERATION_RANGE["fifth_number"][1])
+                while fifth_number - first_number <= 10:
+                    fifth_number = random.randint(NUMBER_GENERATION_RANGE["fifth_number_alt_alt"][0], NUMBER_GENERATION_RANGE["fifth_number_alt_alt"][1])
+            else:
+                fifth_number = random.randint(NUMBER_GENERATION_RANGE["fifth_number_alt"][0], NUMBER_GENERATION_RANGE["fifth_number"][1])
+
+            if fifth_number <= first_number + 10:
+                fifth_number = None
 # <-------------------------------------------------------------------------------------------------------------------------------------------------->
         second_number = None
         while second_number is None:
@@ -163,6 +168,17 @@ def generate_random_drawing_v2():
         numbers_exists = check_numbers(first_number, second_number, third_number, fourth_number, fifth_number)
         if numbers_exists:
             existing_drawing = True
+    
+    if should_save_generation:
+        for generation in numbers:
+            save_generation(
+                generation[0]["first_number"],
+                generation[1]["second_number"],
+                generation[2]["third_number"], 
+                generation[3]["fourth_number"],
+                generation[4]["fifth_number"],
+                generation[5]["powerball_number"]
+            )
 
     return {
         "numbers": numbers,
