@@ -1,13 +1,16 @@
 HISTORICAL_START_DATE = "1997-11-01"
 LAST_BALL_COUNT_CHANGE_DATE = "2015-10-07"
-NEXT_START_DATE = "2025-04-19"
+NEXT_START_DATE = "2025-04-26"
 NEXT_WEEKDAY_DRAWING_MAPPING = {
     0: 2,
     2: 3,
     5: 2,
 }
+
+
+# <---------V2---------->
 ALT_CHANGE_RANGE = {
-    "first_number": [0.69, 0.90],
+    "first_number": [0.65, 0.90],
     "second_number": [0.60, 0.85],
     "third_number": [0.60, 0.85],
     "fourth_number": [0.70, 0.90],
@@ -34,6 +37,7 @@ NUMBER_GENERATION_RANGE = {
     "fifth_number_alt": (49, 58), # %20
     "fifth_number_alt_alt": (36, 48) # %15
 }
-
+# <---------V2---------->
 # Our current chances of winning: 1 in 196,815,528
 # Overall chance for powerball: 1 in 292,201,338
+
