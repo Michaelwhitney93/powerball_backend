@@ -1,10 +1,12 @@
 import random
 import requests
+import math
 from flask import Flask, request
 from db.engine import init_db, tear_down_db
+from db.repositories.drawings import fetch_occurance_by_ball_position
 from services.fetch_numbers_service.fetch_numbers import populate_drawings, check_numbers, save_generation
 from services.fetch_numbers_service.constants import NUMBER_GENERATION_RANGE, ALT_CHANGE_RANGE
-from services.generate_numbers_service.v3_generate import generate_number_by_column
+from services.generate_numbers_service.v3_generate import generate_number_by_column, get_occurance_by_number
 from db.repositories.generations import get_all
 
 app = Flask(__name__)
@@ -190,32 +192,61 @@ def generate_random_drawing_v2():
 
 
 @app.route("/generate/random/v3")
-def test_generate_random_v3():
+def generate_random_drawing_v3():
     drawing_count = int(request.args.get("drawings", "1"))
     should_save_generation = request.args.get("save_generation", "False") == "True"
     numbers = []
     existing_drawing = False
-
+    first_number_ranges = list(fetch_occurance_by_ball_position("first_ball"))
+    second_number_ranges = list(fetch_occurance_by_ball_position("second_ball"))
+    third_number_ranges = list(fetch_occurance_by_ball_position("third_ball"))
+    fourth_number_ranges = list(fetch_occurance_by_ball_position("fourth_ball"))
+    fifth_number_ranges = list(fetch_occurance_by_ball_position("fifth_ball"))
+    power_ball_number_ranges = list(fetch_occurance_by_ball_position("power_ball"))
     for _ in range(drawing_count):
-        first_number = generate_number_by_column("first_ball")
+        # first_number = generate_number_by_column("first_ball")
 
-        second_number = generate_number_by_column("second_ball")
-        while second_number <= first_number:
-            second_number = generate_number_by_column("second_ball")
+        # second_number = generate_number_by_column("second_ball")
+        # while second_number <= first_number:
+        #     second_number = generate_number_by_column("second_ball")
 
-        third_number = generate_number_by_column("third_ball")
-        while third_number <= second_number:
-            third_number = generate_number_by_column("third_ball")
+        # third_number = generate_number_by_column("third_ball")
+        # while third_number <= second_number:
+        #     third_number = generate_number_by_column("third_ball")
 
-        fourth_number = generate_number_by_column("fourth_ball")
-        while fourth_number <= third_number:
-            fourth_number = generate_number_by_column("fourth_ball")
+        # fourth_number = generate_number_by_column("fourth_ball")
+        # while fourth_number <= third_number:
+        #     fourth_number = generate_number_by_column("fourth_ball")
 
-        fifth_number = generate_number_by_column("fifth_ball")
-        while fifth_number <= fourth_number:
-            fifth_number = generate_number_by_column("fifth_ball")
+        # fifth_number = generate_number_by_column("fifth_ball")
+        # while fifth_number <= fourth_number:
+        #     fifth_number = generate_number_by_column("fifth_ball")
+        for _ in range(0, 10):
+            first_number = generate_number_by_column(first_number_ranges)
 
-        power_ball = generate_number_by_column("power_ball")
+        for _ in range(0, 10):
+            fifth_number = generate_number_by_column(fifth_number_ranges)
+            while fifth_number <= first_number + 12:
+                fifth_number = generate_number_by_column(fifth_number_ranges)
+
+        for _ in range(0, 10):
+            second_number = generate_number_by_column(second_number_ranges)
+            while second_number <= first_number or second_number + 3 >= fifth_number:
+                second_number = generate_number_by_column(second_number_ranges)
+
+        for _ in range(0, 10):
+            fourth_number = generate_number_by_column(fourth_number_ranges)
+            while fourth_number <= second_number + 2 or fourth_number >= fifth_number:
+                fourth_number = generate_number_by_column(fourth_number_ranges)
+
+        for _ in range(0, 10):
+            third_number = generate_number_by_column(third_number_ranges)
+            while third_number <= second_number or third_number >= fourth_number:
+                third_number = generate_number_by_column(third_number_ranges)
+
+        for _ in range(0, 10):
+            power_ball = generate_number_by_column(power_ball_number_ranges)
+
         numbers.append([
                 {"first_number": first_number},
                 {"second_number": second_number},
@@ -262,12 +293,61 @@ def test_generations():
 
 @app.route("/test/drawings")
 def test_drawings():
-    pass
+    v1_count_avg = 0
+    v3_count_avg = 0
+    first_number_range = list(fetch_occurance_by_ball_position("first_ball"))
+    for _ in range(1, 100):
+        v1_generations = []
+        v3_generations = []
+        v1_count = 0
+        v3_count = 0
+        for _ in range(0, 1179):
+            generation = []
+            for _ in range(0, 5):
+                number = random.randint(1,69)
+                generation.append(number)
+            v1_generations.append(generation)
+
+            first_number = generate_number_by_column(first_number_range)
+            v3_generations.append([first_number])
+
+        for gen in v1_generations:
+            sorted_gen = sorted(gen)
+            if sorted_gen[0] == 13:
+                v1_count += 1
+        
+        for gen in v3_generations:
+            sorted_gen = sorted(gen)
+            if sorted_gen[0] == 13:
+                v3_count += 1
+        print(v1_count)
+        v1_count_avg += abs(v1_count - 27)
+        v3_count_avg += abs(v3_count - 27)
+
+    return {
+         "v1_generation_count_avg": v1_count_avg / 100,
+         "v3_generation_count_avg": v3_count_avg / 100
+    }
+
+
 
 @app.route("/test/random")
 def test_random():
-    number = random.random()
-    return { number: number }
+    drawings_per_number = []
+    for num in range(1, 70):
+        query = list(get_occurance_by_number(num))
+        drawings_per_number.append({
+            "number": str(num),
+            "count": query[0][0],
+            "percent": query[0][1]
+        })
+    
+    def sort_by_percent(drawing):
+        return drawing["percent"]
+
+    drawings_per_number.sort(key=sort_by_percent)
+
+    return { "drawings": drawings_per_number }
 
 @app.teardown_appcontext
 def remove_session(exception=None):
