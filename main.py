@@ -3,11 +3,12 @@ import requests
 import math
 from flask import Flask, request
 from db.engine import init_db, tear_down_db
-from db.repositories.drawings import fetch_occurance_by_ball_position
-from services.fetch_numbers_service.fetch_numbers import populate_drawings, check_numbers, save_generation
+from db.repositories.drawings import fetch_occurance_by_ball_position, get_all_drawings
+from db.repositories.cash_4_life_drawings import fetch_occurance_by_ball_position as cash_4_life_fetch_occurance_by_ball
+from db.repositories.generations import get_all
+from services.fetch_numbers_service.fetch_numbers import populate_drawings, populate_cash_4_life, check_numbers, save_generation, check_cash_4_life_numbers
 from services.fetch_numbers_service.constants import NUMBER_GENERATION_RANGE, ALT_CHANGE_RANGE
 from services.generate_numbers_service.v3_generate import generate_number_by_column, get_occurance_by_number
-from db.repositories.generations import get_all
 
 app = Flask(__name__)
 init_db()
@@ -18,7 +19,7 @@ def default():
     return "<p>Hello World!</p>"
 
 
-@app.route("/drawings")
+@app.route("/drawings/powerball")
 def get_drawings():
     try:
         populate_drawings()
@@ -191,7 +192,7 @@ def generate_random_drawing_v2():
     }
 
 
-@app.route("/generate/random/v3")
+@app.route("/generate/powerball/random/v3")
 def generate_random_drawing_v3():
     drawing_count = int(request.args.get("drawings", "1"))
     should_save_generation = request.args.get("save_generation", "False") == "True"
@@ -277,6 +278,72 @@ def generate_random_drawing_v3():
     }
 
 
+@app.route("/drawings/cash4life")
+def populate_cash_4_life_drawings():
+    try:
+        populate_cash_4_life()
+        return {}, 204
+    except requests.exceptions.RequestException as e:
+        return f"Request Failed: {e}", 500
+
+
+@app.route("/generate/cash_4_life/random/v1")
+def generate_random_cash4life_drawing_v1():
+    drawing_count = int(request.args.get("drawings", "1"))
+    numbers = []
+    existing_drawing = False
+    first_number_ranges = list(cash_4_life_fetch_occurance_by_ball("first_ball"))
+    second_number_ranges = list(cash_4_life_fetch_occurance_by_ball("second_ball"))
+    third_number_ranges = list(cash_4_life_fetch_occurance_by_ball("third_ball"))
+    fourth_number_ranges = list(cash_4_life_fetch_occurance_by_ball("fourth_ball"))
+    fifth_number_ranges = list(cash_4_life_fetch_occurance_by_ball("fifth_ball"))
+    cash_ball_number_ranges = list(cash_4_life_fetch_occurance_by_ball("cash_ball"))
+    for _ in range(drawing_count):
+        for _ in range(0, 10):
+            first_number = generate_number_by_column(first_number_ranges)
+
+        for _ in range(0, 10):
+            fifth_number = generate_number_by_column(fifth_number_ranges)
+            while fifth_number <= first_number + 12:
+                fifth_number = generate_number_by_column(fifth_number_ranges)
+
+        for _ in range(0, 10):
+            second_number = generate_number_by_column(second_number_ranges)
+            while second_number <= first_number or second_number + 3 >= fifth_number:
+                second_number = generate_number_by_column(second_number_ranges)
+
+        for _ in range(0, 10):
+            fourth_number = generate_number_by_column(fourth_number_ranges)
+            while fourth_number <= second_number + 2 or fourth_number >= fifth_number:
+                fourth_number = generate_number_by_column(fourth_number_ranges)
+
+        for _ in range(0, 10):
+            third_number = generate_number_by_column(third_number_ranges)
+            while third_number <= second_number or third_number >= fourth_number:
+                third_number = generate_number_by_column(third_number_ranges)
+
+        for _ in range(0, 10):
+            cash_ball = generate_number_by_column(cash_ball_number_ranges)
+
+        numbers.append([
+                {"first_number": first_number},
+                {"second_number": second_number},
+                {"third_number": third_number},
+                {"fourth_number": fourth_number},
+                {"fifth_number": fifth_number},
+                {"cashball_number": cash_ball}
+            ])
+
+        numbers_exists = check_cash_4_life_numbers(first_number, second_number, third_number, fourth_number, fifth_number)
+        if numbers_exists:
+            existing_drawing = True
+
+    return {
+        "numbers": numbers,
+        "drawn_before": True if existing_drawing else False,
+    }
+
+
 @app.route("/test/generations")
 def test_generations():
     all_generations = list(get_all())
@@ -293,61 +360,168 @@ def test_generations():
 
 @app.route("/test/drawings")
 def test_drawings():
-    v1_count_avg = 0
-    v3_count_avg = 0
     first_number_range = list(fetch_occurance_by_ball_position("first_ball"))
-    for _ in range(1, 100):
-        v1_generations = []
-        v3_generations = []
-        v1_count = 0
-        v3_count = 0
-        for _ in range(0, 1179):
-            generation = []
-            for _ in range(0, 5):
-                number = random.randint(1,69)
-                generation.append(number)
-            v1_generations.append(generation)
+    second_number_range = list(fetch_occurance_by_ball_position("second_ball"))
+    third_number_range = list(fetch_occurance_by_ball_position("third_ball"))
+    fourth_number_range = list(fetch_occurance_by_ball_position("fourth_ball"))
+    fifth_number_range = list(fetch_occurance_by_ball_position("fifth_ball"))
+    powerball_number_range = list(fetch_occurance_by_ball_position("power_ball"))
+    v1_generations = []
+    v3_generations = []
+    v1_number_counts = {}
+    v3_number_counts = {}
+    for _ in range(0, 1179):
+        generation = []
+        for _ in range(0, 5):
+            number = random.randint(1,69)
+            generation.append(number)
+        power_ball = random.randint(1,26)
+        generation.sort()
+        generation.append(power_ball)
+        v1_generations.append(generation)
 
+        for _ in range(0, 10):
             first_number = generate_number_by_column(first_number_range)
-            v3_generations.append([first_number])
 
-        for gen in v1_generations:
-            sorted_gen = sorted(gen)
-            if sorted_gen[0] == 13:
-                v1_count += 1
-        
-        for gen in v3_generations:
-            sorted_gen = sorted(gen)
-            if sorted_gen[0] == 13:
-                v3_count += 1
-        print(v1_count)
-        v1_count_avg += abs(v1_count - 27)
-        v3_count_avg += abs(v3_count - 27)
+        for _ in range(0, 10):
+            fifth_number = generate_number_by_column(fifth_number_range)
+            while fifth_number <= first_number + 12:
+                fifth_number = generate_number_by_column(fifth_number_range)
+
+        for _ in range(0, 10):
+            second_number = generate_number_by_column(second_number_range)
+            while second_number <= first_number or second_number + 3 >= fifth_number:
+                second_number = generate_number_by_column(second_number_range)
+
+        for _ in range(0, 10):
+            fourth_number = generate_number_by_column(fourth_number_range)
+            while fourth_number <= second_number + 2 or fourth_number >= fifth_number:
+                fourth_number = generate_number_by_column(fourth_number_range)
+
+        for _ in range(0, 10):
+            third_number = generate_number_by_column(third_number_range)
+            while third_number <= second_number or third_number >= fourth_number:
+                third_number = generate_number_by_column(third_number_range)
+
+        for _ in range(0, 10):
+            power_ball_number = generate_number_by_column(powerball_number_range)
+
+        v3_generations.append([
+            first_number, second_number, third_number, fourth_number, fifth_number, power_ball_number
+        ])
+
+    for gen in v1_generations:
+        for num in range(1, 70):
+            if num == gen[0] or num == gen[1] or num == gen[2] or num == gen[3] or num == gen[4]:
+                if v1_number_counts.get(str(num)):
+                    v1_number_counts[str(num)]["count"] += 1
+                    v1_number_counts[str(num)]["percentage"] = v1_number_counts[str(num)]["count"] / 1179
+                else:
+                    v1_number_counts[str(num)] = { "num": num, "count": 1, "percentage": 1 / 1179 }
+
+    for gen in v3_generations:
+        for num in range(1, 70):
+            if num == gen[0] or num == gen[1] or num == gen[2] or num == gen[3] or num == gen[4]:
+                if v3_number_counts.get(str(num)):
+                    v3_number_counts[str(num)]["count"] += 1
+                    v3_number_counts[str(num)]["percentage"] = v3_number_counts[str(num)]["count"] / 1179
+                else:
+                    v3_number_counts[str(num)] = { "num": num, "count": 1, "percentage": 1 / 1179 }
 
     return {
-         "v1_generation_count_avg": v1_count_avg / 100,
-         "v3_generation_count_avg": v3_count_avg / 100
+         "v1_generations": v1_number_counts,
+         "v3_generations": v3_number_counts
     }
-
 
 
 @app.route("/test/random")
 def test_random():
-    drawings_per_number = []
-    for num in range(1, 70):
-        query = list(get_occurance_by_number(num))
-        drawings_per_number.append({
-            "number": str(num),
-            "count": query[0][0],
-            "percent": query[0][1]
-        })
-    
-    def sort_by_percent(drawing):
-        return drawing["percent"]
+    first_number_range = list(fetch_occurance_by_ball_position("first_ball"))
+    second_number_range = list(fetch_occurance_by_ball_position("second_ball"))
+    third_number_range = list(fetch_occurance_by_ball_position("third_ball"))
+    fourth_number_range = list(fetch_occurance_by_ball_position("fourth_ball"))
+    fifth_number_range = list(fetch_occurance_by_ball_position("fifth_ball"))
+    powerball_number_range = list(fetch_occurance_by_ball_position("power_ball"))
+    all_drawings = get_all_drawings()
 
-    drawings_per_number.sort(key=sort_by_percent)
+    v1_generation_count = 0
+    found_v1_drawing = False
+    v3_generation_count = 0
+    found_v3_drawing = False
 
-    return { "drawings": drawings_per_number }
+    # while found_v1_drawing is False:
+    #     gen = []
+    #     for _ in range(0, 5):
+    #         for _ in range(0, 10):
+    #             num = random.randint(1, 70)
+    #         gen.append(num)
+    #     for _ in range(0, 10):
+    #         power_ball = random.randint(1, 27)
+    #     gen.sort()
+    #     gen.append(power_ball)
+
+    #     existing_drawing = None
+    #     for drawing in all_drawings:
+    #         if drawing.first_ball == gen[0] and \
+    #         drawing.second_ball == gen[1] and \
+    #             drawing.third_ball == gen[2] and \
+    #                 drawing.fourth_ball == gen[3] and \
+    #                     drawing.fifth_ball == gen[4] and \
+    #                     drawing.power_ball == gen[5]:
+    #             existing_drawing = drawing
+        
+    #     if existing_drawing:
+    #         found_v1_drawing = True
+
+    #     v1_generation_count += 1
+
+    while found_v3_drawing is False:
+        for _ in range(0, 10):
+            first_number = generate_number_by_column(first_number_range)
+
+        for _ in range(0, 10):
+            fifth_number = generate_number_by_column(fifth_number_range)
+            while fifth_number <= first_number + 12:
+                fifth_number = generate_number_by_column(fifth_number_range)
+
+        for _ in range(0, 10):
+            second_number = generate_number_by_column(second_number_range)
+            while second_number <= first_number or second_number + 3 >= fifth_number:
+                second_number = generate_number_by_column(second_number_range)
+
+        for _ in range(0, 10):
+            fourth_number = generate_number_by_column(fourth_number_range)
+            while fourth_number <= second_number + 2 or fourth_number >= fifth_number:
+                fourth_number = generate_number_by_column(fourth_number_range)
+
+        for _ in range(0, 10):
+            third_number = generate_number_by_column(third_number_range)
+            while third_number <= second_number or third_number >= fourth_number:
+                third_number = generate_number_by_column(third_number_range)
+
+        for _ in range(0, 10):
+            power_ball = generate_number_by_column(powerball_number_range)
+
+        existing_drawing = None
+        for drawing in all_drawings:
+            if drawing.first_ball == first_number and \
+            drawing.second_ball == second_number and \
+                drawing.third_ball == third_number and \
+                    drawing.fourth_ball == fourth_number and \
+                        drawing.fifth_ball == fifth_number and \
+                        drawing.power_ball == power_ball:
+                existing_drawing = drawing
+
+        if existing_drawing:
+            found_v3_drawing = True
+
+        v3_generation_count += 1
+
+    return { 
+        "v3_count": v3_generation_count,
+        # "v1_count": v1_generation_count
+    }
+
 
 @app.teardown_appcontext
 def remove_session(exception=None):

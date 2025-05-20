@@ -7,6 +7,10 @@ def get_by(**kwargs):
     return Drawing.query.filter_by(**kwargs).first()
 
 
+def get_all_drawings():
+    return Drawing.query.all()
+
+
 def fetch_occurance_by_ball_position(column):
     with engine.connect() as conn:
         result = conn.execute(
