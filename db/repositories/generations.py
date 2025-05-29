@@ -1,7 +1,10 @@
 from models.generations import Generation
 
-def get_by(**kwargs):
-    return Generation.query.filter_by(**kwargs).first()
 
-def get_all():
-    return Generation.query.all()
+class GenerationRespository:
+    @classmethod
+    def get_by(cls, **kwargs):
+        return Generation.query.filter_by(**kwargs).first()
+    @classmethod
+    def get_all(cls):
+        return Generation.query.all()

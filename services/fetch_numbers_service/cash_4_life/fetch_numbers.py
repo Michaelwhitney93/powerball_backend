@@ -3,43 +3,14 @@ import json
 import time
 import random
 from datetime import datetime, timedelta
-from services.fetch_numbers_service.constants import (
-    NEXT_START_DATE,
-    NEXT_WEEKDAY_DRAWING_MAPPING,
-    CASH_4_LIFE_START_DRAWING_DATE,
-)
-from services.fetch_numbers_service.parser import build_drawing_from_html
+from services.fetch_numbers_service.constants import CASH_4_LIFE_START_DRAWING_DATE
 from db.engine import db_session
-from db.repositories.drawings import get_by
-from db.repositories.cash_4_life_drawings import get_by as cash_4_life_get_by
+from db.repositories.cash_4_life_drawings import Cash4LifeRepository
 from models.generations import Generation
 from models.cash_4_life_drawing import Cash4LifeDrawing
-
-
-def populate_drawings(draw_date: str = NEXT_START_DATE):
-    try:
-        while datetime.strptime(draw_date, "%Y-%m-%d") <= datetime.today():
-            response = requests.get(f"https://www.powerball.com/draw-result?gc=powerball&date={draw_date}")
-            response.raise_for_status()
-            powerball_drawing = build_drawing_from_html(response.text)
-            if powerball_drawing.is_complete_instance():
-                print(powerball_drawing.date_drawn)
-                existing_drawing = get_by(date_drawn=powerball_drawing.date_drawn)
-                if not existing_drawing:
-                    print("Saving")
-                    db_session.add(powerball_drawing)
-                    db_session.commit()
-            time_delta = timedelta(NEXT_WEEKDAY_DRAWING_MAPPING.get(powerball_drawing.date_drawn.weekday()))
-            new_draw_datetime = datetime.strptime(draw_date, "%Y-%m-%d") + time_delta
-            draw_date = new_draw_datetime.strftime("%Y-%m-%d")
-            backoff_time = random.uniform(1, 20)
-            time.sleep(backoff_time)
-    except requests.exceptions.RequestException as e:
-        print(f"Request Failed: {e}")
-        raise e
     
 
-def populate_cash_4_life(start_date: str = CASH_4_LIFE_START_DRAWING_DATE):
+def populate_drawings(start_date: str = CASH_4_LIFE_START_DRAWING_DATE):
     try:
         while datetime.strptime(start_date, "%Y-%m-%d") < datetime.today():
             start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
@@ -74,7 +45,7 @@ def populate_cash_4_life(start_date: str = CASH_4_LIFE_START_DRAWING_DATE):
                 )
                 if cash_4_life_drawing.is_complete_instance():
                     print(cash_4_life_drawing.date_drawn)
-                    existing_drawing = cash_4_life_get_by(date_drawn=cash_4_life_drawing.date_drawn)
+                    existing_drawing = Cash4LifeRepository.get_by(date_drawn=cash_4_life_drawing.date_drawn)
                     if not existing_drawing:
                         print("Saving")
                         db_session.add(cash_4_life_drawing)
@@ -101,21 +72,7 @@ def save_generation(first, second, third, fourth, fifth, powerball):
     db_session.commit()
 
 
-def check_numbers(first, second, third, fourth, fifth, powerball=None):
-    kwargs = dict(
-        first_ball=first,
-        second_ball=second,
-        third_ball=third,
-        fourth_ball=fourth,
-        fifth_ball=fifth
-    )
-    if powerball:
-        kwargs["power_ball"] = powerball
-    existing_drawing = get_by(**kwargs)
-    return existing_drawing
-
-
-def check_cash_4_life_numbers(first, second, third, fourth, fifth, cash_ball=None):
+def check_numbers(first, second, third, fourth, fifth, cash_ball=None):
     kwargs = dict(
         first_ball=first,
         second_ball=second,
@@ -125,5 +82,5 @@ def check_cash_4_life_numbers(first, second, third, fourth, fifth, cash_ball=Non
     )
     if cash_ball:
         kwargs["cash_ball"] = cash_ball
-    existing_drawing = cash_4_life_get_by(**kwargs)
+    existing_drawing = Cash4LifeRepository.get_by(**kwargs)
     return existing_drawing
