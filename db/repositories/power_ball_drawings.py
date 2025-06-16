@@ -64,3 +64,41 @@ class PowerballRepository:
                 )
             )
             return result
+
+    @classmethod
+    def fetch_occurance_with_num_and_date(cls):
+        with engine.connect() as conn:
+            result = conn.execute(
+                text(
+                    f"""
+                    SELECT num, date_drawn
+                    FROM (
+                        SELECT first_ball AS num, date_drawn FROM drawings
+                        UNION ALL
+                        SELECT second_ball, date_drawn FROM drawings
+                        UNION ALL
+                        SELECT third_ball, date_drawn FROM drawings
+                        UNION ALL
+                        SELECT fourth_ball, date_drawn FROM drawings
+                        UNION ALL
+                        SELECT fifth_ball, date_drawn FROM drawings
+                    ) all_numbers
+                    ORDER BY num, date_drawn;
+                    """
+                )
+            )
+            return result
+
+    @classmethod
+    def fetch_power_ball_occurance_with_num_and_date(cls):
+        with engine.connect() as conn:
+            result = conn.execute(
+                text(
+                    f"""
+                    SELECT power_ball, date_drawn
+                    FROM drawings
+                    ORDER BY power_ball, date_drawn;
+                    """
+                )
+            )
+            return result

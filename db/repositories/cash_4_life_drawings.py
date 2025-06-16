@@ -33,7 +33,7 @@ class Cash4LifeRepository:
             return result
         
     @classmethod
-    def fetch_occurance_by_number(cls, date='2015-10-03'):
+    def fetch_occurance_by_number(cls, date='2014-06-16'):
         with engine.connect() as conn:
             result = conn.execute(
                 text(
@@ -60,6 +60,44 @@ class Cash4LifeRepository:
                     ) t
                     GROUP BY n.num, t.total_draws
                     ORDER BY percent;
+                    """
+                )
+            )
+            return result
+
+    @classmethod
+    def fetch_occurance_with_num_and_date(cls):
+        with engine.connect() as conn:
+            result = conn.execute(
+                text(
+                    f"""
+                    SELECT num, date_drawn
+                    FROM (
+                        SELECT first_ball AS num, date_drawn FROM cash_4_life_drawings
+                        UNION ALL
+                        SELECT second_ball, date_drawn FROM cash_4_life_drawings
+                        UNION ALL
+                        SELECT third_ball, date_drawn FROM cash_4_life_drawings
+                        UNION ALL
+                        SELECT fourth_ball, date_drawn FROM cash_4_life_drawings
+                        UNION ALL
+                        SELECT fifth_ball, date_drawn FROM cash_4_life_drawings
+                    ) all_numbers
+                    ORDER BY num, date_drawn;
+                    """
+                )
+            )
+            return result
+        
+    @classmethod
+    def fetch_cash_ball_occurance_with_num_and_date(cls):
+        with engine.connect() as conn:
+            result = conn.execute(
+                text(
+                    f"""
+                    SELECT cash_ball, date_drawn
+                    FROM cash_4_life_drawings
+                    ORDER BY cash_ball, date_drawn;
                     """
                 )
             )
