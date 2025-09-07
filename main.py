@@ -7,7 +7,7 @@ from controllers.power_ball.generate_v1 import generate_power_ball_drawing_v1
 from controllers.power_ball.generate_v2 import generate_power_ball_drawing_v2
 from controllers.power_ball.generate_v3 import generate_power_ball_drawing_v3
 from controllers.power_ball.generate_v4 import (
-    generate_power_ball_drawing_v4, generate_power_ball_drawing_overtime_v4, generate_power_ball_drawing_v5
+    generate_power_ball_drawing_v4, generate_power_ball_drawing_overtime_v4, generate_power_ball_drawing_v5, generate_power_ball_drawing_v6
 )
 from controllers.cash_4_life.generate_v4 import (
     generate_cash_4_life_drawing_v4, generate_cash_4_life_drawing_overtime_v4, generate_cash_4_life_drawing_v5
@@ -105,6 +105,16 @@ def generate_random_powerball_drawing_v5():
         drawing_count = int(request.args.get("drawings", "1"))
         should_save_generation = request.args.get("save_generation", "False") == "True"
         return generate_power_ball_drawing_v5(drawing_count, should_save_generation)
+    except Exception as e:
+        return f"Request Failed: {e}", 500
+    
+
+@app.route("/generate/powerball/random/v6")
+def generate_random_powerball_drawing_v6():
+    try:
+        drawing_count = int(request.args.get("drawings", "1"))
+        should_save_generation = request.args.get("save_generation", "False") == "True"
+        return generate_power_ball_drawing_v6(drawing_count, should_save_generation)
     except Exception as e:
         return f"Request Failed: {e}", 500
 

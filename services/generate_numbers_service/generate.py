@@ -33,7 +33,7 @@ def decay_weight(days_since_draw, half_life_days=180):
     return math.exp(-math.log(2) * days_since_draw / half_life_days)
 
 
-def compute_weighted_frequencies(results, half_life_days=180):
+def compute_weighted_frequencies(results, half_life_days=365):
     now = datetime.now()
     number_weights = defaultdict(float)
     number_count = defaultdict(int)

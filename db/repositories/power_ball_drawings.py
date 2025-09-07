@@ -22,7 +22,7 @@ class PowerballRepository:
                             SELECT COUNT(*)
                             FROM drawings
                             WHERE date_drawn >= '{date}'
-                    ) as percent
+                    ) as percent, date_drawn
                     FROM drawings
                     WHERE date_drawn >= '{date}'
                     GROUP BY {column}
@@ -98,6 +98,20 @@ class PowerballRepository:
                     SELECT power_ball, date_drawn
                     FROM drawings
                     ORDER BY power_ball, date_drawn;
+                    """
+                )
+            )
+            return result
+        
+    @classmethod
+    def fetch_occurance_by_position_and_date(cls, column):
+        with engine.connect() as conn:
+            result = conn.execute(
+                text(
+                    f"""
+                    SELECT {column}, date_drawn
+                    FROM drawings
+                    ORDER BY {column}, date_drawn;
                     """
                 )
             )
