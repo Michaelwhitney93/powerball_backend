@@ -2,10 +2,10 @@ import requests
 import time
 import random
 from datetime import datetime, timedelta
-from services.fetch_numbers_service.constants import NEXT_START_DATE, NEXT_WEEKDAY_DRAWING_MAPPING
-from services.fetch_numbers_service.powerball.parser import build_drawing_from_html
+from constants import NEXT_START_DATE, NEXT_WEEKDAY_DRAWING_MAPPING
+from services.parser import build_drawing_from_html
 from db.engine import db_session
-from db.repositories.power_ball_drawings import PowerballRepository
+from db.repositories.drawings import DrawingsRepository
 from models.generations import Generation
 
 
@@ -17,7 +17,7 @@ def populate_drawings(draw_date: str = NEXT_START_DATE):
             powerball_drawing = build_drawing_from_html(response.text)
             if powerball_drawing.is_complete_instance():
                 print(powerball_drawing.date_drawn)
-                existing_drawing = PowerballRepository.get_by(date_drawn=powerball_drawing.date_drawn)
+                existing_drawing = DrawingsRepository.get_by(date_drawn=powerball_drawing.date_drawn)
                 if not existing_drawing:
                     print("Saving")
                     db_session.add(powerball_drawing)
@@ -56,5 +56,5 @@ def check_numbers(first, second, third, fourth, fifth, powerball=None):
     )
     if powerball:
         kwargs["power_ball"] = powerball
-    existing_drawing = PowerballRepository.get_by(**kwargs)
+    existing_drawing = DrawingsRepository.get_by(**kwargs)
     return existing_drawing

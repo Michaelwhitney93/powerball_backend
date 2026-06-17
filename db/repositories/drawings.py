@@ -3,7 +3,7 @@ from models.drawing import Drawing
 from db.engine import engine
 
 
-class PowerballRepository:
+class DrawingsRepository:
     @classmethod
     def get_by(cls, **kwargs):
         return Drawing.query.filter_by(**kwargs).first()
@@ -94,7 +94,7 @@ class PowerballRepository:
         with engine.connect() as conn:
             result = conn.execute(
                 text(
-                    f"""
+                    """
                     SELECT power_ball, date_drawn
                     FROM drawings
                     ORDER BY power_ball, date_drawn;
@@ -102,7 +102,7 @@ class PowerballRepository:
                 )
             )
             return result
-        
+
     @classmethod
     def fetch_occurance_by_position_and_date(cls, column):
         with engine.connect() as conn:
