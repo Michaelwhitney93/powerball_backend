@@ -3,6 +3,7 @@ from flask import Flask, request
 from db.engine import init_db, tear_down_db
 from controllers.populate import populate_powerball_drawings
 from controllers.generate import generate_powerball_drawing_v6
+from controllers.generate_multi import generate_multi
 from controllers.routes_archive import archive_bp
 
 
@@ -32,6 +33,16 @@ def generate_random_powerball_drawing():
         drawing_count = int(request.args.get("drawings", "1"))
         should_save_generation = request.args.get("save_generation", "False") == "True"
         return generate_powerball_drawing_v6(drawing_count, should_save_generation)
+    except Exception as e:
+        return f"Request Failed: {e}", 500
+
+
+@app.route("/generate/powerball/multi")
+def generate_multi_endpoint():
+    try:
+        count = int(request.args.get("drawings", "1"))
+        constraints = [c.strip() for c in request.args.get("constraints", "").split(",") if c.strip()]
+        return generate_multi(count, constraints)
     except Exception as e:
         return f"Request Failed: {e}", 500
 
