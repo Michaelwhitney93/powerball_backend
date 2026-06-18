@@ -1,5 +1,6 @@
 import random
 import statistics
+import warnings
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -140,6 +141,9 @@ def make_constrained(gen_fn, constraint_factories, max_retries=300):
             white, pb = gen_fn()
             if all(c(white) for c in constraints):
                 return white, pb
+        warnings.warn(
+            f"{gen_fn.__name__}: constraint not satisfied after {max_retries} retries; returning unconstrained result"
+        )
         return gen_fn()
 
     constrained.__name__ = gen_fn.__name__ + "_constrained"
@@ -437,8 +441,8 @@ def build_registry(drawings):
     calendar = make_calendar_conditioned(drawings)
     state = make_state_conditioned(drawings)
     drought = make_drought_breaker(drawings)
-    ensemble = make_ensemble_voting([hot, pos, gap, markov])
     chaos = make_pure_chaos(drawings)
+    ensemble = make_ensemble_voting([hot, cold, pos, markov, pairs, gap, winner, calendar, state, drought, chaos])
 
     return [hot, cold, pos, markov, pairs, gap, winner, calendar, state,
             drought, ensemble, chaos]

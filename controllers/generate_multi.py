@@ -10,7 +10,17 @@ from services.algorithms import (
 VALID_CONSTRAINTS = {"sum_range", "odd_even"}
 
 
-def generate_multi(count: int, constraints: list[str]):
+def _build_lookup(registry: list) -> dict:
+    lookup = {}
+    for algo in registry:
+        key = algo.__name__.removesuffix("_constrained")
+        if key.startswith("state_conditioned"):
+            key = "state_conditioned"
+        lookup[key] = algo
+    return lookup
+
+
+def generate_multi(count: int, constraints: list[str], algorithm: str = "random"):
     drawings = DrawingsRepository.get_all_drawings()
     registry = build_registry(drawings)
 
@@ -23,12 +33,20 @@ def generate_multi(count: int, constraints: list[str]):
     if constraint_factories:
         registry = [make_constrained(algo, constraint_factories) for algo in registry]
 
+    lookup = _build_lookup(registry)
+
+    if algorithm != "random" and algorithm not in lookup:
+        return {
+            "error": f"Unknown algorithm '{algorithm}'.",
+            "valid_algorithms": sorted(lookup.keys()) + ["random"],
+        }, 400
+
     results = []
     for _ in range(count):
-        algo = random.choice(registry)
-        white, pb = algo()
+        chosen = random.choice(registry) if algorithm == "random" else lookup[algorithm]
+        white, pb = chosen()
         results.append({
-            "algorithm": algo.__name__,
+            "algorithm": chosen.__name__,
             "white_balls": white,
             "power_ball": pb,
         })
@@ -36,5 +54,6 @@ def generate_multi(count: int, constraints: list[str]):
     return {
         "generations": results,
         "count": count,
+        "algorithm": algorithm,
         "constraints_applied": [c for c in constraints if c in VALID_CONSTRAINTS],
     }

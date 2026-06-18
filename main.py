@@ -42,7 +42,8 @@ def generate_multi_endpoint():
     try:
         count = int(request.args.get("drawings", "1"))
         constraints = [c.strip() for c in request.args.get("constraints", "").split(",") if c.strip()]
-        return generate_multi(count, constraints)
+        algorithm = request.args.get("algorithm", "random")
+        return generate_multi(count, constraints, algorithm)
     except Exception as e:
         return f"Request Failed: {e}", 500
 
