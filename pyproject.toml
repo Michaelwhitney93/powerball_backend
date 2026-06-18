@@ -17,6 +17,12 @@ beautifulsoup4 = "^4.13.3"
 requests = "^2.32.3"
 
 
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

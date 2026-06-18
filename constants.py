@@ -1,11 +1,19 @@
 HISTORICAL_START_DATE = "1997-11-01"
 LAST_BALL_COUNT_CHANGE_DATE = "2015-10-04"
+MONDAY_DRAWING_START_DATE = "2021-08-23"
 NEXT_START_DATE = "2025-08-27"
 
-NEXT_WEEKDAY_DRAWING_MAPPING = {
-    0: 2,
-    2: 3,
-    5: 2,
+# Wed/Sat only (before 2021-08-23)
+TWO_DRAWING_WEEKDAY_MAPPING = {
+    2: 3,  # Wednesday → Saturday (+3)
+    5: 4,  # Saturday → Wednesday (+4)
+}
+
+# Mon/Wed/Sat (2021-08-23 onward)
+THREE_DRAWING_WEEKDAY_MAPPING = {
+    0: 2,  # Monday → Wednesday (+2)
+    2: 3,  # Wednesday → Saturday (+3)
+    5: 2,  # Saturday → Monday (+2)
 }
 
 GENERATIVE_RANDOMNESS_RANGE = 100
