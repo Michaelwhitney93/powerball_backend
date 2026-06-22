@@ -1,10 +1,11 @@
 import requests
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from db.engine import init_db, tear_down_db
 from controllers.populate import populate_powerball_drawings
 from controllers.generate import generate_powerball_drawing_v6
 from controllers.generate_multi import generate_multi
 from controllers.routes_archive import archive_bp
+from services.fetch_numbers import save_generation
 
 
 app = Flask(__name__)
@@ -44,6 +45,19 @@ def generate_multi_endpoint():
         constraints = [c.strip() for c in request.args.get("constraints", "").split(",") if c.strip()]
         algorithm = request.args.get("algorithm", "random")
         return generate_multi(count, constraints, algorithm)
+    except Exception as e:
+        return f"Request Failed: {e}", 500
+
+
+@app.route("/generate/powerball/save", methods=["POST"])
+def save_generations():
+    try:
+        data = request.get_json()
+        generations = data.get("generations", [])
+        for gen in generations:
+            white = gen["white_balls"]
+            save_generation(white[0], white[1], white[2], white[3], white[4], gen["power_ball"])
+        return jsonify({"saved": len(generations)})
     except Exception as e:
         return f"Request Failed: {e}", 500
 
